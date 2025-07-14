@@ -1,0 +1,62 @@
+﻿"schemaname","tablename","policyname","permissive","roles","cmd","qual","with_check"
+"public","profiles","Users can insert their own profile.","PERMISSIVE","{public}","INSERT","null","(auth.uid() = id)"
+"public","profiles","Enable insert for authenticated users only","PERMISSIVE","{public}","INSERT","null","(auth.uid() = id)"
+"public","profiles","Enable update for users based on id","PERMISSIVE","{public}","UPDATE","(auth.uid() = id)","null"
+"public","profiles","Users can read own profile","PERMISSIVE","{public}","SELECT","(auth.uid() = id)","null"
+"public","profiles","Users can update own profile","PERMISSIVE","{public}","UPDATE","(auth.uid() = id)","null"
+"public","driver_details","Drivers can read own details","PERMISSIVE","{public}","SELECT","(auth.uid() = user_id)","null"
+"public","driver_details","Drivers can create own details","PERMISSIVE","{public}","INSERT","null","(auth.uid() = user_id)"
+"public","driver_details","Drivers can update own details","PERMISSIVE","{public}","UPDATE","(auth.uid() = user_id)","null"
+"public","warehouse_details","Warehouse owners can read own details","PERMISSIVE","{public}","SELECT","(auth.uid() = user_id)","null"
+"public","warehouse_details","Warehouse owners can create own details","PERMISSIVE","{public}","INSERT","null","(auth.uid() = user_id)"
+"public","warehouse_details","Warehouse owners can update own details","PERMISSIVE","{public}","UPDATE","(auth.uid() = user_id)","null"
+"public","broker_details","Brokers can read own details","PERMISSIVE","{public}","SELECT","(auth.uid() = user_id)","null"
+"public","broker_details","Brokers can create own details","PERMISSIVE","{public}","INSERT","null","(auth.uid() = user_id)"
+"public","broker_details","Brokers can update own details","PERMISSIVE","{public}","UPDATE","(auth.uid() = user_id)","null"
+"public","profiles","Enable insert for authentication service","PERMISSIVE","{public}","INSERT","null","true"
+"public","job_applications","Drivers can view their own applications","PERMISSIVE","{public}","SELECT","(auth.uid() = driver_id)","null"
+"public","job_applications","Drivers can create applications","PERMISSIVE","{public}","INSERT","null","(auth.uid() = driver_id)"
+"public","job_applications","Warehouse owners can view applications for their jobs","PERMISSIVE","{public}","SELECT","(EXISTS ( SELECT 1
+   FROM jobs
+  WHERE ((jobs.id = job_applications.job_id) AND (jobs.warehouse_owner_id = auth.uid()))))","null"
+"public","job_applications","Warehouse owners can update applications for their jobs","PERMISSIVE","{public}","UPDATE","(EXISTS ( SELECT 1
+   FROM jobs
+  WHERE ((jobs.id = job_applications.job_id) AND (jobs.warehouse_owner_id = auth.uid()))))","null"
+"public","jobs","Warehouse owners can view their jobs","PERMISSIVE","{authenticated}","SELECT","(warehouse_owner_id = auth.uid())","null"
+"public","verification_requests","Users can view their verification requests","PERMISSIVE","{authenticated}","SELECT","((requested_by = auth.uid()) OR (job_id IN ( SELECT j.id
+   FROM jobs j
+  WHERE ((j.warehouse_owner_id = auth.uid()) OR (auth.uid() IN ( SELECT broker_details.user_id
+           FROM broker_details))))))","null"
+"public","verification_requests","Users can create verification requests","PERMISSIVE","{authenticated}","INSERT","null","((requested_by = auth.uid()) AND (job_id IN ( SELECT jobs.id
+   FROM jobs
+  WHERE (jobs.assigned_driver_id = auth.uid()))))"
+"public","verification_requests","Authorized users can update verification requests","PERMISSIVE","{authenticated}","UPDATE","(job_id IN ( SELECT j.id
+   FROM jobs j
+  WHERE ((j.warehouse_owner_id = auth.uid()) OR (auth.uid() IN ( SELECT broker_details.user_id
+           FROM broker_details)))))","(job_id IN ( SELECT j.id
+   FROM jobs j
+  WHERE ((j.warehouse_owner_id = auth.uid()) OR (auth.uid() IN ( SELECT broker_details.user_id
+           FROM broker_details)))))"
+"public","jobs","Jobs are viewable by warehouse owners who created them","PERMISSIVE","{authenticated}","SELECT","((auth.uid() = warehouse_owner_id) AND (EXISTS ( SELECT 1
+   FROM profiles
+  WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'warehouse_owner'::user_role)))))","null"
+"public","jobs","Warehouse owners can update their own jobs","PERMISSIVE","{authenticated}","UPDATE","((auth.uid() = warehouse_owner_id) AND (EXISTS ( SELECT 1
+   FROM profiles
+  WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'warehouse_owner'::user_role)))))","((auth.uid() = warehouse_owner_id) AND (EXISTS ( SELECT 1
+   FROM profiles
+  WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'warehouse_owner'::user_role)))))"
+"public","verification_requests","Drivers can create verification requests","PERMISSIVE","{authenticated}","INSERT","null","(EXISTS ( SELECT 1
+   FROM jobs
+  WHERE ((jobs.id = verification_requests.job_id) AND (jobs.assigned_driver_id = auth.uid()))))"
+"public","verification_requests","Warehouse owners can view and respond to verification requests","PERMISSIVE","{authenticated}","ALL","(EXISTS ( SELECT 1
+   FROM jobs
+  WHERE ((jobs.id = verification_requests.job_id) AND (jobs.warehouse_owner_id = auth.uid()))))","null"
+"public","verification_requests","Drivers can view their own verification requests","PERMISSIVE","{authenticated}","SELECT","(requested_by = auth.uid())","null"
+"public","profiles","Drivers can view warehouse owners' profiles","PERMISSIVE","{public}","SELECT","((auth.uid() = id) OR (EXISTS ( SELECT 1
+   FROM jobs
+  WHERE ((jobs.warehouse_owner_id = profiles.id) AND (jobs.assigned_driver_id = auth.uid())))))","null"
+"public","profiles","Drivers can view profiles","PERMISSIVE","{public}","SELECT","((auth.uid() = id) OR (EXISTS ( SELECT 1
+   FROM jobs
+  WHERE ((jobs.warehouse_owner_id = profiles.id) AND (jobs.assigned_driver_id = auth.uid())))))","null"
+"public","jobs","Jobs are viewable by assigned drivers","PERMISSIVE","{authenticated}","SELECT","(auth.uid() = assigned_driver_id)","null"
+"public","jobs","Warehouse owners can create jobs","PERMISSIVE","{authenticated}","INSERT","null","(auth.uid() = warehouse_owner_id)"

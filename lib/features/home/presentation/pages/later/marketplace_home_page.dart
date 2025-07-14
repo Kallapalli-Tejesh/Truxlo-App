@@ -156,19 +156,19 @@ class MarketplaceHomePage extends StatelessWidget {
                 _buildJobCard(
                   'Package Delivery',
                   'From: New York\nTo: Boston',
-                  '\$150',
+                  '₹150',
                   '2.5 kg',
                 ),
                 _buildJobCard(
                   'Furniture Moving',
                   'From: Chicago\nTo: Detroit',
-                  '\$300',
+                  '₹300',
                   '50 kg',
                 ),
                 _buildJobCard(
                   'Food Delivery',
                   'From: Restaurant\nTo: Customer',
-                  '\$25',
+                  '₹25',
                   '1 kg',
                 ),
               ],

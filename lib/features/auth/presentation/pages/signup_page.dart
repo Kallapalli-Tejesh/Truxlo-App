@@ -156,7 +156,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
                   child: Image.asset(
-                    'assets/images/logo.png',
+                    'assets/images/Truxlo-removebg-preview.png',
                     height: 100,
                     fit: BoxFit.contain,
                   ),

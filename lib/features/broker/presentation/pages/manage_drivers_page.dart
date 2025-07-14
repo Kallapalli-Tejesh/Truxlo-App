@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/services/broker_service.dart';
 import '../../../../core/services/supabase_service.dart';
+import 'package:trux/core/theme/app_theme.dart';
 
 class ManageDriversPage extends StatefulWidget {
   const ManageDriversPage({super.key});
@@ -13,6 +14,9 @@ class _ManageDriversPageState extends State<ManageDriversPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _phoneController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _nameController = TextEditingController();
   bool _isLoading = false;
   List<Map<String, dynamic>> _drivers = [];
   List<Map<String, dynamic>> _pendingInvitations = [];
@@ -49,38 +53,39 @@ class _ManageDriversPageState extends State<ManageDriversPage>
     }
   }
 
-  Future<void> _addDriver() async {
-    if (_phoneController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a phone number')),
-      );
-      return;
-    }
+  Future<void> _inviteDriver() async {
+    if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isLoading = true);
     try {
-      final userId = SupabaseService.client.auth.currentUser!.id;
-      await BrokerService.addDriver(
-        brokerId: userId,
-        driverPhone: _phoneController.text,
+      setState(() => _isLoading = true);
+      await SupabaseService.inviteDriver(
+        email: _emailController.text,
+        name: _nameController.text,
+        phone: _phoneController.text,
       );
-
-      _phoneController.clear();
-      await _loadData();
-
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Invitation sent successfully')),
+          const SnackBar(
+            content: Text('Driver invited successfully'),
+            backgroundColor: Colors.green,
+          ),
         );
+        Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
+          SnackBar(
+            content: Text('Error inviting driver: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -145,7 +150,7 @@ class _ManageDriversPageState extends State<ManageDriversPage>
     if (_isLoading) {
       return const Center(
         child: CircularProgressIndicator(
-          color: Color(0xFF6B5ECD),
+          color: Colors.red,
         ),
       );
     }
@@ -237,7 +242,7 @@ class _ManageDriversPageState extends State<ManageDriversPage>
     if (_isLoading) {
       return const Center(
         child: CircularProgressIndicator(
-          color: Color(0xFF6B5ECD),
+          color: Colors.red,
         ),
       );
     }
@@ -357,61 +362,93 @@ class _ManageDriversPageState extends State<ManageDriversPage>
                 left: 16,
                 right: 16,
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Text(
-                    'Add Driver',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _phoneController,
-                    decoration: InputDecoration(
-                      labelText: 'Driver Phone Number',
-                      hintText: 'Enter driver\'s phone number',
-                      filled: true,
-                      fillColor: Colors.white.withOpacity(0.05),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Text(
+                      'Invite New Driver',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    style: const TextStyle(color: Colors.white),
-                    keyboardType: TextInputType.phone,
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _isLoading ? null : _addDriver,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6B5ECD),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                    const SizedBox(height: 24),
+                    TextFormField(
+                      controller: _emailController,
+                      decoration: const InputDecoration(
+                        labelText: 'Email',
+                        border: OutlineInputBorder(),
                       ),
+                      keyboardType: TextInputType.emailAddress,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter email';
+                        }
+                        if (!value.contains('@')) {
+                          return 'Please enter a valid email';
+                        }
+                        return null;
+                      },
                     ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Full Name',
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter name';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _phoneController,
+                      decoration: const InputDecoration(
+                        labelText: 'Phone Number',
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.phone,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter phone number';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: _inviteDriver,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6B5ECD),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              'Send Invitation',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          )
-                        : const Text(
-                            'Send Invitation',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
             ),
           );
@@ -425,6 +462,8 @@ class _ManageDriversPageState extends State<ManageDriversPage>
   void dispose() {
     _tabController.dispose();
     _phoneController.dispose();
+    _emailController.dispose();
+    _nameController.dispose();
     super.dispose();
   }
 }

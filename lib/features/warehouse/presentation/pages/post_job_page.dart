@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/services/supabase_service.dart';
 import '../../../jobs/domain/models/job.dart';
 
@@ -32,18 +33,15 @@ class _PostJobPageState extends State<PostJobPage> {
 
   Future<void> _loadWarehouseLocation() async {
     try {
-      final userId = SupabaseService.client.auth.currentUser?.id;
-      if (userId == null) return;
-
-      final profile = await SupabaseService.getUserProfile(userId);
-      if (profile != null && profile['warehouse_details'] != null) {
+      final profile = await SupabaseService.getUserProfile();
+      if (profile != null && profile.warehouseDetails != null) {
         setState(() {
           _pickupLocationController.text =
-              profile['warehouse_details']['address'] ?? '';
+              profile.warehouseDetails!['address'] ?? '';
         });
       }
     } catch (e) {
-      print('Error loading warehouse location: $e');
+      debugPrint('Error loading warehouse location: $e');
     }
   }
 
@@ -182,7 +180,7 @@ class _PostJobPageState extends State<PostJobPage> {
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
-                color: Color(0xFF6B5ECD),
+                color: Colors.red,
               ),
             ),
           ),

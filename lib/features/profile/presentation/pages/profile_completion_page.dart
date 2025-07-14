@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/services/supabase_service.dart';
 import '../../../home/presentation/pages/home_page.dart';
 
@@ -557,7 +559,7 @@ class _ProfileCompletionPageState extends State<ProfileCompletionPage> {
                           }
                         },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6B5ECD),
+                    backgroundColor: Colors.red,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -568,7 +570,7 @@ class _ProfileCompletionPageState extends State<ProfileCompletionPage> {
                           height: 20,
                           width: 20,
                           child: CircularProgressIndicator(
-                            color: Colors.white,
+                            color: Colors.red,
                             strokeWidth: 2,
                           ),
                         )

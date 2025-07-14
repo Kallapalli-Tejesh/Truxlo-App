@@ -182,7 +182,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                   Text(
                     job.description,
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
+                      color: Colors.grey[400],
                       fontSize: 16,
                     ),
                   ),
@@ -219,8 +219,8 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
             _buildDetailSection(
               'Additional Information',
               [
-                _buildDetailRow('Posted', _formatDate(job.postedDate)),
-                _buildDetailRow('Status', job.status.toUpperCase()),
+                _buildDetailRow('Posted', _formatDate(job.postedDate ?? DateTime.now())),
+                _buildDetailRow('Status', job.jobStatus.toUpperCase()),
               ],
             ),
             const SizedBox(height: 32),
@@ -263,13 +263,13 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                   ],
                 ),
               )
-            else if (job.status == 'open')
+            else if (job.jobStatus == 'open')
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: _applyForJob,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF6B5ECD),
+                    backgroundColor: Colors.red,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),

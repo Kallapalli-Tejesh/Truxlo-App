@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/services/supabase_service.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../auth/domain/models/user_profile.dart';
 import '../../../auth/presentation/pages/login_page.dart';
-import '../../../broker/presentation/pages/manage_drivers_page.dart';
-import '../../../driver/presentation/pages/manage_brokers_page.dart';
 import '../../../jobs/domain/models/job.dart';
+import '../../../jobs/domain/models/job_application.dart';
 import '../../../jobs/presentation/pages/job_details_page.dart';
+import '../../../profile/presentation/pages/profile_page.dart';
+import '../../../profile/presentation/pages/profile_completion_page.dart';
 import '../../../warehouse/presentation/pages/warehouse_home_page.dart';
 import '../../../broker/presentation/pages/broker_home_page.dart';
 
@@ -20,9 +22,9 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage>
     with SingleTickerProviderStateMixin {
   bool _isLoading = true;
-  Map<String, dynamic>? _profile;
+  UserProfile? _profile;
   List<Job> _availableJobs = [];
-  List<Map<String, dynamic>> _myApplications = [];
+  List<JobApplication> _myApplications = [];
   List<Job> _myJobs = [];
   RealtimeChannel? _jobsChannel;
   RealtimeChannel? _applicationsChannel;
@@ -32,21 +34,8 @@ class _HomePageState extends State<HomePage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-    _initializeData();
-  }
-
-  Future<void> _initializeData() async {
-    if (_isDisposed) return;
-    await _loadProfile();
-    if (_isDisposed) return;
-    await Future.wait([
-      _loadAvailableJobs(),
-      _loadMyApplications(),
-      _loadMyJobs(),
-    ]);
-    _setupRealtimeSubscription();
-    _setupApplicationsSubscription();
+    _tabController = TabController(length: 4, vsync: this);
+    _loadProfile();
   }
 
   @override
@@ -61,22 +50,27 @@ class _HomePageState extends State<HomePage>
   Future<void> _loadProfile() async {
     if (_isDisposed) return;
     try {
-      final userId = SupabaseService.client.auth.currentUser?.id;
-      if (userId == null) {
-        print('Error: No user ID found');
-        return;
+      final profile = await SupabaseService.getUserProfile();
+      if (profile != null) {
+        setState(() {
+          _profile = profile;
+          _isLoading = false;
+        });
+        _loadAvailableJobs();
+        _loadMyApplications();
+        _loadMyJobs();
+        _setupRealtimeSubscription();
       }
-
-      final profile = await SupabaseService.getUserProfile(userId);
-      if (_isDisposed) return;
-
-      setState(() {
-        _profile = profile;
-        _isLoading = false;
-      });
     } catch (e) {
-      print('Error loading profile: $e');
-      if (_isDisposed) return;
+      debugPrint('Error loading profile: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading profile: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
       setState(() {
         _isLoading = false;
       });
@@ -86,23 +80,19 @@ class _HomePageState extends State<HomePage>
   Future<void> _loadAvailableJobs() async {
     if (_isDisposed) return;
     try {
-      print('Loading available jobs...');
-      print('Auth state: ${SupabaseService.client.auth.currentSession}');
-      print('Current user: ${SupabaseService.client.auth.currentUser}');
-
+      debugPrint('Loading available jobs...');
       final jobs = await SupabaseService.getOpenJobs();
-      print('Received ${jobs.length} jobs from database');
-      print('Jobs data: $jobs');
+      debugPrint('Received ${jobs.length} jobs from database');
 
       if (_isDisposed) return;
 
       setState(() {
         _availableJobs = jobs.map((job) => Job.fromJson(job)).toList();
-        print('Parsed jobs length: ${_availableJobs.length}');
+        debugPrint('Parsed jobs length: ${_availableJobs.length}');
       });
     } catch (e, stackTrace) {
-      print('Error loading jobs: $e');
-      print('Stack trace: $stackTrace');
+      debugPrint('Error loading jobs: $e');
+      debugPrint('Stack trace: $stackTrace');
       if (_isDisposed) return;
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -122,10 +112,10 @@ class _HomePageState extends State<HomePage>
       if (_isDisposed) return;
 
       setState(() {
-        _myApplications = applications;
+        _myApplications = applications.map((app) => JobApplication.fromJson(app)).toList();
       });
     } catch (e) {
-      print('Error loading applications: $e');
+      debugPrint('Error loading applications: $e');
       if (_isDisposed) return;
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -148,43 +138,38 @@ class _HomePageState extends State<HomePage>
         _myJobs = jobs.map((job) => Job.fromJson(job)).toList();
       });
     } catch (e) {
-      print('Error loading my jobs: $e');
+      debugPrint('Error loading jobs: $e');
       if (_isDisposed) return;
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading my jobs: $e')),
+          SnackBar(content: Text('Error loading jobs: $e')),
         );
       }
     }
   }
 
   void _setupRealtimeSubscription() {
-    if (_isDisposed) return;
     final userId = SupabaseService.client.auth.currentUser?.id;
     if (userId == null) return;
 
-    _jobsChannel = SupabaseService.client
-        .channel('public:jobs')
+    // Subscribe to job changes
+    _jobsChannel = SupabaseService.client.channel('public:jobs');
+    _jobsChannel!
         .onPostgresChanges(
           event: PostgresChangeEvent.all,
           schema: 'public',
           table: 'jobs',
-          callback: (payload) {
-            if (!_isDisposed && mounted) {
-              _loadAvailableJobs();
-            }
+          callback: (payload) async {
+            debugPrint('Job change detected: ${payload.eventType}');
+            await _loadAvailableJobs();
+            await _loadMyJobs();
           },
         )
         .subscribe();
-  }
 
-  void _setupApplicationsSubscription() {
-    if (_isDisposed) return;
-    final userId = SupabaseService.client.auth.currentUser?.id;
-    if (userId == null) return;
-
-    _applicationsChannel = SupabaseService.client
-        .channel('public:job_applications:driver_id=eq.$userId')
+    // Subscribe to application changes
+    _applicationsChannel = SupabaseService.client.channel('public:job_applications');
+    _applicationsChannel!
         .onPostgresChanges(
           event: PostgresChangeEvent.all,
           schema: 'public',
@@ -194,14 +179,15 @@ class _HomePageState extends State<HomePage>
             column: 'driver_id',
             value: userId,
           ),
-          callback: (payload) {
-            if (!_isDisposed && mounted) {
-              _loadMyApplications();
-              if (payload.eventType == PostgresChangeEvent.update) {
-                final newStatus = payload.newRecord?['status'] as String?;
-                if (newStatus != null) {
-                  _showStatusUpdateNotification(newStatus);
-                }
+          callback: (payload) async {
+            debugPrint('Application change detected: ${payload.eventType}');
+            await _loadMyApplications();
+
+            // Show notification for status updates
+            if (payload.eventType == PostgresChangeEvent.update) {
+              final newStatus = payload.newRecord?['status'] as String?;
+              if (newStatus != null) {
+                _showStatusUpdateNotification(newStatus);
               }
             }
           },
@@ -305,7 +291,7 @@ class _HomePageState extends State<HomePage>
         backgroundColor: Colors.black,
         body: Center(
           child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6B5ECD)),
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
           ),
         ),
       );
@@ -323,7 +309,7 @@ class _HomePageState extends State<HomePage>
       );
     }
 
-    final userRole = _profile!['role']?.toString().toLowerCase();
+    final userRole = _profile!.role?.toString().toLowerCase();
 
     if (userRole == 'driver') {
       return _buildDriverHome();
@@ -349,6 +335,14 @@ class _HomePageState extends State<HomePage>
       backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
         automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: Icon(Icons.account_circle, color: AppTheme.primaryColor),
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ProfilePage()),
+            );
+          },
+        ),
         backgroundColor: AppTheme.surfaceColor,
         title: Text(
           'Driver Dashboard',
@@ -365,10 +359,6 @@ class _HomePageState extends State<HomePage>
               ]);
             },
           ),
-          IconButton(
-            icon: Icon(Icons.logout, color: AppTheme.primaryColor),
-            onPressed: _signOut,
-          ),
         ],
         bottom: TabBar(
           controller: _tabController,
@@ -376,9 +366,9 @@ class _HomePageState extends State<HomePage>
           labelColor: AppTheme.textPrimary,
           unselectedLabelColor: AppTheme.textSecondary,
           tabs: const [
-            Tab(text: 'Available Jobs'),
-            Tab(text: 'My Applications'),
-            Tab(text: 'My Jobs'),
+            Tab(icon: Icon(Icons.assignment), text: 'Jobs'),
+            Tab(icon: Icon(Icons.local_shipping), text: 'My Jobs'),
+            Tab(icon: Icon(Icons.people), text: 'Applications'),
           ],
         ),
       ),
@@ -386,8 +376,8 @@ class _HomePageState extends State<HomePage>
         controller: _tabController,
         children: [
           _buildAvailableJobsTab(),
-          _buildMyApplicationsTab(),
           _buildMyJobsTab(),
+          _buildMyApplicationsTab(),
         ],
       ),
     );
@@ -400,7 +390,7 @@ class _HomePageState extends State<HomePage>
   Widget _buildAvailableJobsTab() {
     return RefreshIndicator(
       onRefresh: _loadAvailableJobs,
-      color: Color(0xFF6B5ECD),
+      color: Colors.red,
       child: CustomScrollView(
         slivers: [
           SliverPadding(
@@ -417,7 +407,7 @@ class _HomePageState extends State<HomePage>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Welcome back, ${_profile!['full_name']}',
+                        'Welcome back, ${_profile!.fullName}',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 24,
@@ -468,7 +458,7 @@ class _HomePageState extends State<HomePage>
   Widget _buildMyApplicationsTab() {
     return RefreshIndicator(
       onRefresh: _loadMyApplications,
-      color: Color(0xFF6B5ECD),
+      color: Colors.red,
       child: CustomScrollView(
         slivers: [
           SliverPadding(
@@ -495,9 +485,7 @@ class _HomePageState extends State<HomePage>
                     ),
                   )
                 else
-                  ..._myApplications
-                      .map((app) => _buildApplicationCard(app))
-                      .toList(),
+                  ..._myApplications.map((app) => _buildApplicationCard(app)).toList(),
               ]),
             ),
           ),
@@ -552,13 +540,13 @@ class _HomePageState extends State<HomePage>
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: _getStatusColor(job.status),
+                        color: _getStatusColor(job.jobStatus),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        job.status.toUpperCase(),
-                        style: const TextStyle(
-                          color: Colors.white,
+                        job.jobStatus.toUpperCase(),
+                        style: TextStyle(
+                          color: job.jobStatus.toLowerCase() == 'open' ? Colors.white : Colors.white,
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
@@ -569,7 +557,7 @@ class _HomePageState extends State<HomePage>
                 const SizedBox(height: 12),
                 _buildDetailRow('Type', job.goodsType),
                 _buildDetailRow('Weight', '${job.weight} kg'),
-                _buildDetailRow('Price', '\$${job.price}'),
+                _buildDetailRow('Price', '₹${job.price}'),
                 _buildDetailRow('Distance', '${job.distance} km'),
                 const SizedBox(height: 12),
                 _buildLocationSection(
@@ -584,7 +572,7 @@ class _HomePageState extends State<HomePage>
                   Icons.location_on,
                 ),
                 const SizedBox(height: 16),
-                if (job.status == 'assigned')
+                if (job.jobStatus == 'assigned')
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -607,11 +595,11 @@ class _HomePageState extends State<HomePage>
                       ),
                     ),
                   ),
-                if (job.status == 'in_progress')
+                if (job.jobStatus == 'inTransit')
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () => _updateJobStatus(job, 'completed'),
+                      onPressed: () => _updateJobStatus(job.id, job.jobStatus),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
                         padding: const EdgeInsets.symmetric(vertical: 12),
@@ -638,31 +626,19 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildJobCard(Job job) {
-    // Check if any job in _myJobs is active (status is 'assigned' or 'in_progress')
-    final hasActiveJob = _myJobs.any((j) =>
-        j.status.toLowerCase() == 'assigned' ||
-        j.status.toLowerCase() == 'in_progress');
-
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => JobDetailsPage(job: job),
-          ),
-        );
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: Colors.white.withOpacity(0.1),
-            width: 1,
-          ),
+  return InkWell(
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => JobDetailsPage(job: job),
         ),
+      );
+    },
+    child: Card(
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -673,7 +649,6 @@ class _HomePageState extends State<HomePage>
                   child: Text(
                     job.title,
                     style: const TextStyle(
-                      color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -685,15 +660,15 @@ class _HomePageState extends State<HomePage>
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.2),
+                    color: _getJobStatusColor(job.jobStatus),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    '₹${job.price.toStringAsFixed(0)}',
-                    style: const TextStyle(
-                      color: Colors.red,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                    _getJobStatusText(job.jobStatus),
+                    style: TextStyle(
+                      color: job.jobStatus.toLowerCase() == 'open' ? Colors.white : Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
@@ -703,140 +678,37 @@ class _HomePageState extends State<HomePage>
             Text(
               job.description,
               style: TextStyle(
-                color: Colors.grey[400],
+                color: Colors.grey[600],
                 fontSize: 14,
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Icon(
-                  Icons.location_on,
-                  color: Colors.grey[400],
-                  size: 16,
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    'From: ${job.pickupLocation}',
-                    style: TextStyle(
-                      color: Colors.grey[400],
-                      fontSize: 14,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                Icon(
-                  Icons.location_on,
-                  color: Colors.grey[400],
-                  size: 16,
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    'To: ${job.destination}',
-                    style: TextStyle(
-                      color: Colors.grey[400],
-                      fontSize: 14,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Icon(
-                  Icons.access_time,
-                  color: Colors.grey[400],
-                  size: 16,
-                ),
-                const SizedBox(width: 4),
                 Text(
-                  _formatTimeAgo(job.postedDate),
-                  style: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 14,
+                  '₹${job.price.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
                   ),
                 ),
-                const SizedBox(width: 16),
-                Icon(
-                  Icons.local_shipping,
-                  color: Colors.grey[400],
-                  size: 16,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  '${job.weight} kg',
-                  style: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Icon(
-                  Icons.route,
-                  color: Colors.grey[400],
-                  size: 16,
-                ),
-                const SizedBox(width: 4),
                 Text(
                   '${job.distance} km',
                   style: TextStyle(
-                    color: Colors.grey[400],
                     fontSize: 14,
+                    color: Colors.grey[600],
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            if (hasActiveJob)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: Colors.orange.withOpacity(0.3),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.warning_amber_rounded,
-                      color: Colors.orange,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Complete your current active job before applying for new ones',
-                        style: TextStyle(
-                          color: Colors.orange,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              )
-            else
+            if (job.jobStatus == 'assigned')
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => _applyForJob(job.id),
+                  onPressed: () => _startDelivery(job.id),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
                     foregroundColor: Colors.white,
@@ -846,8 +718,8 @@ class _HomePageState extends State<HomePage>
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: Text(
-                    'Apply for Job',
+                  child: const Text(
+                    'Start Delivery',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -855,16 +727,39 @@ class _HomePageState extends State<HomePage>
                   ),
                 ),
               ),
+            if (job.jobStatus == 'inTransit')
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => _updateJobStatus(job.id, job.jobStatus),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text(
+                    'Complete Delivery',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
-  Widget _buildApplicationCard(Map<String, dynamic> application) {
-    final job = Job.fromJson(application['job']);
-    final status = application['status'];
-    final createdAt = DateTime.parse(application['created_at']);
+  Widget _buildApplicationCard(JobApplication application) {
+    final job = application.job!;
+    final status = application.status;
+    final createdAt = application.createdAt;
 
     Color statusColor;
     IconData statusIcon;
@@ -923,11 +818,10 @@ class _HomePageState extends State<HomePage>
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
+                  horizontal: 8,
+                  vertical: 4,
                 ),
                 decoration: BoxDecoration(
                   color: statusColor.withOpacity(0.2),
@@ -955,18 +849,7 @@ class _HomePageState extends State<HomePage>
               ),
             ],
           ),
-          if (statusDescription != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Text(
-                statusDescription,
-                style: TextStyle(
-                  color: statusColor.withOpacity(0.8),
-                  fontSize: 14,
-                ),
-              ),
-            ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
             job.description,
             style: TextStyle(
@@ -978,75 +861,54 @@ class _HomePageState extends State<HomePage>
           ),
           const SizedBox(height: 12),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(
-                Icons.location_on,
-                color: Colors.grey[400],
-                size: 16,
+              Text(
+                'Applied ${_formatTimeAgo(createdAt)}',
+                style: TextStyle(
+                  color: Colors.grey[500],
+                  fontSize: 14,
+                ),
               ),
-              const SizedBox(width: 4),
-              Expanded(
-                child: Text(
-                  'From: ${job.pickupLocation}',
+              if (job.warehouseOwner != null)
+                Text(
+                  job.warehouseOwner!.fullName ?? 'Unknown',
                   style: TextStyle(
-                    color: Colors.grey[400],
+                    color: Colors.grey[500],
                     fontSize: 14,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
             ],
           ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              Icon(
-                Icons.location_on,
-                color: Colors.grey[400],
-                size: 16,
+          if (statusDescription != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: statusColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
               ),
-              const SizedBox(width: 4),
-              Expanded(
-                child: Text(
-                  'To: ${job.destination}',
-                  style: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 14,
+              child: Row(
+                children: [
+                  Icon(
+                    statusIcon,
+                    color: statusColor,
+                    size: 20,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      statusDescription,
+                      style: TextStyle(
+                        color: statusColor,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildInfoChip(
-                  Icons.access_time,
-                  'Applied ${_formatTimeAgo(createdAt)}',
-                ),
-                const SizedBox(width: 16),
-                _buildInfoChip(
-                  Icons.local_shipping,
-                  '${job.weight} kg',
-                ),
-                const SizedBox(width: 16),
-                _buildInfoChip(
-                  Icons.route,
-                  '${job.distance} km',
-                ),
-                const SizedBox(width: 16),
-                _buildInfoChip(
-                  Icons.monetization_on,
-                  '₹${job.price.toStringAsFixed(0)}',
-                ),
-              ],
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -1171,7 +1033,7 @@ class _HomePageState extends State<HomePage>
                 height: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
                 ),
               ),
               SizedBox(width: 12),
@@ -1237,46 +1099,29 @@ class _HomePageState extends State<HomePage>
     switch (status.toLowerCase()) {
       case 'assigned':
         return Colors.blue;
-      case 'in_progress':
+      case 'awaitingpickupverification':
+        return Colors.purple;
+      case 'intransit':
         return Colors.orange;
       case 'completed':
         return Colors.green;
+      case 'cancelled':
+        return Colors.red;
+      case 'open':
+        return Colors.blue;
       default:
         return Colors.grey;
     }
   }
 
-  Future<void> _updateJobStatus(Job job, String newStatus) async {
-    try {
-      await SupabaseService.updateJobStatus(job.id, newStatus);
-      await _loadMyJobs();
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content:
-              Text('Job status updated to ${newStatus.replaceAll('_', ' ')}'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error updating job status: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
   Future<void> _startDelivery(String jobId) async {
     try {
-      await SupabaseService.updateJobStatus(jobId, 'in_progress');
+      await SupabaseService.updateJobStatus(jobId, 'awaitingPickupVerification');
       await _loadMyJobs();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Delivery started'),
+          content: Text('Delivery started - Awaiting pickup verification'),
           backgroundColor: Colors.green,
         ),
       );
@@ -1288,6 +1133,92 @@ class _HomePageState extends State<HomePage>
           backgroundColor: Colors.red,
         ),
       );
+    }
+  }
+
+  Future<void> _updateJobStatus(String jobId, String currentStatus) async {
+    try {
+      switch (currentStatus.toLowerCase()) {
+        case 'assigned':
+          await SupabaseService.startDelivery(jobId);
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Delivery started - Awaiting pickup verification'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          break;
+        case 'awaitingpickupverification':
+          await SupabaseService.updateJobStatus(jobId, 'inTransit');
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Job status updated to In Transit'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          break;
+        case 'intransit':
+          await SupabaseService.completeDelivery(jobId);
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Delivery completed - Awaiting warehouse owner verification'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          break;
+        default:
+          return;
+      }
+      await _loadMyJobs();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error updating job status: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  String _getJobStatusText(String status) {
+    switch (status.toLowerCase()) {
+      case 'open':
+        return 'Open';
+      case 'assigned':
+        return 'Assigned';
+      case 'awaitingpickupverification':
+        return 'Awaiting Pickup';
+      case 'intransit':
+        return 'In Transit';
+      case 'completed':
+        return 'Completed';
+      case 'cancelled':
+        return 'Cancelled';
+      default:
+        return status;
+    }
+  }
+
+  Color _getJobStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'open':
+        return Colors.blue; // Bright standard blue for open
+      case 'assigned':
+        return Colors.blue;
+      case 'awaitingpickupverification':
+        return Colors.purple;
+      case 'intransit':
+        return Colors.orange;
+      case 'completed':
+        return Colors.green;
+      case 'cancelled':
+        return Colors.red;
+      default:
+        return Colors.grey;
     }
   }
 }
