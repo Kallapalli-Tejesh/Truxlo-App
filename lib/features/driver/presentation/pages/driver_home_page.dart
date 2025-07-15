@@ -188,7 +188,7 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
     }
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      appBar: AppBar(
+        appBar: AppBar(
         automaticallyImplyLeading: false,
         leading: IconButton(
           icon: Icon(Icons.account_circle, color: AppTheme.primaryColor),
@@ -199,11 +199,12 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
           },
         ),
         backgroundColor: AppTheme.surfaceColor,
+        elevation: 0,
         title: Text(
           'Driver Dashboard',
-          style: AppTheme.headingMedium,
+          style: AppTheme.headingMedium.copyWith(color: Colors.white),
         ),
-        actions: [
+          actions: [
           IconButton(
             icon: Icon(Icons.refresh, color: AppTheme.primaryColor),
             onPressed: () async {
@@ -218,8 +219,7 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: AppTheme.primaryColor,
-          labelColor: AppTheme.textPrimary,
-          unselectedLabelColor: AppTheme.textSecondary,
+          labelStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           tabs: const [
             Tab(icon: Icon(Icons.assignment), text: 'Jobs'),
             Tab(icon: Icon(Icons.local_shipping), text: 'My Jobs'),
@@ -229,6 +229,7 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
       ),
       body: TabBarView(
         controller: _tabController,
+        physics: const BouncingScrollPhysics(),
         children: [
           _buildAvailableJobsTab(),
           _buildMyJobsTab(),
@@ -241,37 +242,33 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
   Widget _buildAvailableJobsTab() {
     return RefreshIndicator(
       onRefresh: _loadAvailableJobs,
-      color: Colors.red,
+      color: AppTheme.primaryColor,
       child: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
         slivers: [
           SliverPadding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 Container(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.05),
+                    color: AppTheme.surfaceColor,
                     borderRadius: BorderRadius.circular(16),
+                    boxShadow: AppTheme.cardShadow,
+                    border: Border.all(color: AppTheme.borderColor),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'Welcome back, ${_profile!.fullName}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: AppTheme.headingLarge.copyWith(color: Colors.white),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         'Driver',
-                        style: TextStyle(
-                          color: Colors.grey[400],
-                          fontSize: 16,
-                        ),
+                        style: AppTheme.bodyMedium.copyWith(color: Colors.grey[400]),
                       ),
                     ],
                   ),
@@ -279,21 +276,14 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
                 const SizedBox(height: 24),
                 Text(
                   'Available Jobs',
-                  style: TextStyle(
-                    color: Colors.grey[300],
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AppTheme.headingMedium.copyWith(color: Colors.grey[300]),
                 ),
                 const SizedBox(height: 16),
                 if (_availableJobs.isEmpty)
                   Center(
                     child: Text(
                       'No jobs available at the moment',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
-                        fontSize: 16,
-                      ),
+                      style: AppTheme.bodyLarge.copyWith(color: Colors.white.withOpacity(0.8)),
                     ),
                   )
                 else
@@ -485,8 +475,16 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
           ),
         );
       },
+      borderRadius: BorderRadius.circular(12),
       child: Card(
-        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        margin: const EdgeInsets.only(top: 12, bottom: 12, left: 16, right: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: AppTheme.borderColor),
+        ),
+        elevation: 4,
+        shadowColor: Colors.black54,
+        color: AppTheme.surfaceColor,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -498,10 +496,7 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
                   Expanded(
                     child: Text(
                       job.title,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.bold),
                     ),
                   ),
                   Container(
@@ -515,10 +510,10 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
                     ),
                     child: Text(
                       _getJobStatusText(job.jobStatus),
-                      style: TextStyle(
-                        color: job.jobStatus.toLowerCase() == 'open' ? Colors.white : Colors.white,
-                        fontSize: 12,
+                      style: AppTheme.bodyMedium.copyWith(
+                        color: Colors.white,
                         fontWeight: FontWeight.w500,
+                        letterSpacing: 1.2,
                       ),
                     ),
                   ),
@@ -527,10 +522,7 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
               const SizedBox(height: 8),
               Text(
                 job.description,
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 14,
-                ),
+                style: AppTheme.bodyMedium.copyWith(color: Colors.grey[400]),
               ),
               const SizedBox(height: 16),
               Row(
@@ -538,18 +530,14 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
                 children: [
                   Text(
                     '₹${job.price.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      fontSize: 16,
+                    style: AppTheme.bodyLarge.copyWith(
                       fontWeight: FontWeight.bold,
                       color: Colors.green,
                     ),
                   ),
                   Text(
                     '${job.distance} km',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
+                    style: AppTheme.bodyMedium.copyWith(color: Colors.grey[600]),
                   ),
                 ],
               ),
@@ -559,21 +547,10 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () => _startDelivery(job.id),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
+                    style: AppTheme.elevatedHomeButtonStyle,
                     child: const Text(
-                      'Start Delivery',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      'START DELIVERY',
+                      style: TextStyle(letterSpacing: 1.2),
                     ),
                   ),
                 ),
@@ -582,20 +559,12 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () => _updateJobStatus(job.id, job.jobStatus),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                    style: AppTheme.elevatedHomeButtonStyle.copyWith(
+                      backgroundColor: MaterialStateProperty.all(Colors.green),
                     ),
                     child: const Text(
-                      'Complete Delivery',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      'COMPLETE DELIVERY',
+                      style: TextStyle(letterSpacing: 1.2),
                     ),
                   ),
                 ),
@@ -654,7 +623,7 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: Text(
+            child: Text(
                   job.title,
                   style: const TextStyle(
                     color: Colors.white,
@@ -685,10 +654,10 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
                     const SizedBox(width: 4),
                     Text(
                       statusMessage,
-                      style: TextStyle(
+              style: TextStyle(
                         color: statusColor,
                         fontSize: 14,
-                        fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],
@@ -709,10 +678,10 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
+              children: [
+                Text(
                 'Applied ${_formatTimeAgo(createdAt)}',
-                style: TextStyle(
+                  style: TextStyle(
                   color: Colors.grey[500],
                   fontSize: 14,
                 ),
@@ -750,11 +719,11 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
                         color: statusColor,
                         fontSize: 14,
                       ),
-                    ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
+          ),
           ],
         ],
       ),
@@ -783,9 +752,9 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
             ),
           ),
         ],
-      ),
-    );
-  }
+        ),
+      );
+    }
 
   Widget _buildLocationSection(String label, String value, IconData icon) {
     return Row(
@@ -793,9 +762,9 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
         Icon(icon, color: Colors.white.withOpacity(0.7), size: 20),
         const SizedBox(width: 8),
         Expanded(
-          child: Column(
+        child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+          children: [
               Text(
                 label,
                 style: TextStyle(
@@ -803,10 +772,10 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
                   fontSize: 14,
                 ),
               ),
-              Text(
+            Text(
                 value,
                 style: const TextStyle(
-                  color: Colors.white,
+              color: Colors.white,
                   fontSize: 16,
                 ),
               ),
@@ -837,7 +806,7 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
         ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
+          content: Text(
                 'Please complete your current job before applying for new ones'),
             backgroundColor: Colors.orange,
           ),
@@ -940,8 +909,8 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
           content: Text('Error starting delivery: $e'),
           backgroundColor: Colors.red,
         ),

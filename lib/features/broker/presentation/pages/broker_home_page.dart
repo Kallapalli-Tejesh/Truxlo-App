@@ -334,25 +334,22 @@ class _BrokerHomePageState extends State<BrokerHomePage> with SingleTickerProvid
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          GridView.count(
+            crossAxisCount: 2,
+            crossAxisSpacing: AppTheme.gridSpacing,
+            mainAxisSpacing: AppTheme.gridSpacing,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
             children: [
               _buildStatCard('Total Drivers', totalDrivers.toString(), Icons.people),
               _buildStatCard('Active Drivers', activeDrivers.toString(), Icons.directions_car),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
               _buildStatCard('Pending Apps', pendingApplications.toString(), Icons.hourglass_empty),
               _buildStatCard('Deliveries', totalDeliveries.toString(), Icons.local_shipping),
+              _buildStatCard('Earnings', '₹$earnings', Icons.attach_money),
             ],
           ),
-          const SizedBox(height: 16),
-          _buildStatCard('Earnings', '₹$earnings', Icons.attach_money),
           const SizedBox(height: 24),
-          Text('Quick Actions', style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.bold)),
+          Text('Quick Actions', style: AppTheme.bodyLarge.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -360,14 +357,14 @@ class _BrokerHomePageState extends State<BrokerHomePage> with SingleTickerProvid
                 onPressed: _showAddDriverDialog,
                 icon: Icon(Icons.person_add),
                 label: Text('Add Driver'),
-                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
+                style: AppTheme.elevatedHomeButtonStyle,
               ),
               const SizedBox(width: 16),
               ElevatedButton.icon(
                 onPressed: _showAssignJobDialog,
                 icon: Icon(Icons.assignment),
                 label: Text('Assign Job'),
-                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
+                style: AppTheme.elevatedHomeButtonStyle,
               ),
             ],
           ),
@@ -377,25 +374,24 @@ class _BrokerHomePageState extends State<BrokerHomePage> with SingleTickerProvid
   }
 
   Widget _buildStatCard(String label, String value, IconData icon) {
-    return Expanded(
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppTheme.surfaceColor,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppTheme.borderColor),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: AppTheme.primaryColor, size: 28),
-            const SizedBox(height: 8),
-            Text(value, style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 4),
-            Text(label, style: Theme.of(context).textTheme.bodySmall ?? AppTheme.bodyMedium),
-          ],
-        ),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.borderColor),
+        boxShadow: AppTheme.cardShadow,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: AppTheme.primaryColor, size: 28),
+          const SizedBox(height: 8),
+          Text(value, style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          Text(label, style: AppTheme.bodyMedium.copyWith(color: Colors.grey)),
+        ],
       ),
     );
   }
@@ -652,7 +648,7 @@ class _BrokerHomePageState extends State<BrokerHomePage> with SingleTickerProvid
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppTheme.surfaceColor,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.account_circle, color: AppTheme.primaryColor),
@@ -662,18 +658,24 @@ class _BrokerHomePageState extends State<BrokerHomePage> with SingleTickerProvid
             );
           },
         ),
-        title: const Text('Broker Dashboard', style: TextStyle(color: Colors.white)),
+        title: const Text('Broker Dashboard',
+          style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
         bottom: TabBar(
           controller: _tabController,
+          labelStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           tabs: const [
+            Tab(icon: Icon(Icons.dashboard), text: 'Overview'),
             Tab(icon: Icon(Icons.people), text: 'Drivers'),
+            Tab(icon: Icon(Icons.assignment), text: 'Jobs'),
             Tab(icon: Icon(Icons.analytics), text: 'Analytics'),
           ],
         ),
       ),
       body: TabBarView(
         controller: _tabController,
+        physics: const BouncingScrollPhysics(),
         children: [
+          _buildDashboardOverview(),
           SingleChildScrollView(
             padding: EdgeInsets.all(AppTheme.paddingLarge),
             child: Column(

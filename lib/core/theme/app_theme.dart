@@ -159,6 +159,26 @@ class AppTheme {
     titleTextStyle: headingMedium,
   );
 
+  // Card Shadow
+  static const List<BoxShadow> cardShadow = [
+    BoxShadow(color: Colors.black54, blurRadius: 8, offset: Offset(0,4)),
+  ];
+
+  // Grid Spacing
+  static const double gridSpacing = 12.0;
+
+  // Elevated Button Style for Home Pages
+  static ButtonStyle elevatedHomeButtonStyle = ElevatedButton.styleFrom(
+    elevation: 4,
+    shadowColor: Colors.black54,
+    backgroundColor: primaryColor,
+    foregroundColor: textPrimary,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(radiusMedium),
+    ),
+    textStyle: buttonText.copyWith(letterSpacing: 1.2, fontWeight: FontWeight.bold),
+  );
+
   // Get ThemeData
   static ThemeData getTheme() {
     return ThemeData(

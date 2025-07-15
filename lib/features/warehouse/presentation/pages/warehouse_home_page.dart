@@ -551,114 +551,105 @@ class _WarehouseHomePageState extends State<WarehouseHomePage>
     final statusColor = _getJobStatusColor(job.jobStatus);
     final statusText = _getJobStatusText(job.jobStatus);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.1),
-          width: 1,
+    return InkWell(
+      onTap: () => _showJobDetails(job),
+      borderRadius: BorderRadius.circular(12),
+      child: Card(
+        margin: const EdgeInsets.only(top: 12, bottom: 12, left: 16, right: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: AppTheme.borderColor),
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  job.title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  statusText,
-                  style: TextStyle(
-                    color: statusColor,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            job.description,
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.8),
-              fontSize: 14,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Icon(
-                Icons.location_on,
-                color: Colors.white.withOpacity(0.6),
-                size: 16,
-              ),
-              const SizedBox(width: 4),
-              Expanded(
-                child: Text(
-                  '${job.pickupLocation} → ${job.destination}',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.6),
-                    fontSize: 14,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        elevation: 4,
+        shadowColor: Colors.black54,
+        color: AppTheme.surfaceColor,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    '₹${job.price.toStringAsFixed(2)}',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.6),
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
+                  Expanded(
+                    child: Text(
+                      job.title,
+                      style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.bold),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: statusColor.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      statusText,
+                      style: AppTheme.bodyMedium.copyWith(
+                        color: statusColor,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1.2,
+                      ),
                     ),
                   ),
                 ],
               ),
-              if (job.assignedDriverId != null)
-                Text(
-                  'Assigned to: ${job.assignedDriver?.fullName ?? "Unknown Driver"}',
-                  style: TextStyle(
+              const SizedBox(height: 8),
+              Text(
+                job.description,
+                style: AppTheme.bodyMedium.copyWith(color: Colors.white.withOpacity(0.8)),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Icon(
+                    Icons.location_on,
                     color: Colors.white.withOpacity(0.6),
-                    fontSize: 14,
+                    size: 16,
                   ),
-                ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      '${job.pickupLocation} → ${job.destination}',
+                      style: AppTheme.bodyMedium.copyWith(color: Colors.white.withOpacity(0.6)),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        '₹${job.price.toStringAsFixed(2)}',
+                        style: AppTheme.bodyLarge.copyWith(
+                          color: Colors.green,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (job.assignedDriverId != null)
+                    Text(
+                      'Assigned to: ${job.assignedDriver?.fullName ?? "Unknown Driver"}',
+                      style: AppTheme.bodyMedium.copyWith(color: Colors.white.withOpacity(0.6)),
+                    ),
+                ],
+              ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -1252,6 +1243,7 @@ class _WarehouseHomePageState extends State<WarehouseHomePage>
       backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
         backgroundColor: AppTheme.surfaceColor,
+        elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.account_circle, color: AppTheme.primaryColor),
           onPressed: () {
@@ -1262,7 +1254,7 @@ class _WarehouseHomePageState extends State<WarehouseHomePage>
         ),
         title: Text(
           'Warehouse Dashboard',
-          style: AppTheme.headingMedium,
+          style: AppTheme.headingMedium.copyWith(color: Colors.white),
         ),
         actions: [
           IconButton(
@@ -1276,8 +1268,7 @@ class _WarehouseHomePageState extends State<WarehouseHomePage>
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: AppTheme.primaryColor,
-          labelColor: AppTheme.textPrimary,
-          unselectedLabelColor: AppTheme.textSecondary,
+          labelStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           tabs: const [
             Tab(icon: Icon(Icons.assignment), text: 'Posted Jobs'),
             Tab(icon: Icon(Icons.local_shipping), text: 'Active Jobs'),
@@ -1287,6 +1278,7 @@ class _WarehouseHomePageState extends State<WarehouseHomePage>
       ),
       body: TabBarView(
         controller: _tabController,
+        physics: const BouncingScrollPhysics(),
         children: [
           _buildPostedJobsTab(),
           _buildActiveJobsTab(),
@@ -1304,6 +1296,7 @@ class _WarehouseHomePageState extends State<WarehouseHomePage>
           }
         },
         backgroundColor: AppTheme.primaryColor,
+        elevation: 4,
         child: Icon(Icons.add, color: AppTheme.textPrimary),
       ),
     );
@@ -1312,38 +1305,34 @@ class _WarehouseHomePageState extends State<WarehouseHomePage>
   Widget _buildPostedJobsTab() {
     return RefreshIndicator(
       onRefresh: _loadPostedJobs,
-      color: Colors.red,
-      backgroundColor: Colors.black,
+      color: AppTheme.primaryColor,
+      backgroundColor: AppTheme.backgroundColor,
       child: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
         slivers: [
           SliverPadding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 Container(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.05),
+                    color: AppTheme.surfaceColor,
                     borderRadius: BorderRadius.circular(16),
+                    boxShadow: AppTheme.cardShadow,
+                    border: Border.all(color: AppTheme.borderColor),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'Welcome back, ${_profile!.fullName}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: AppTheme.headingLarge.copyWith(color: Colors.white),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         'Warehouse Owner',
-                        style: TextStyle(
-                          color: Colors.grey[400],
-                          fontSize: 16,
-                        ),
+                        style: AppTheme.bodyMedium.copyWith(color: Colors.grey[400]),
                       ),
                     ],
                   ),
@@ -1351,21 +1340,14 @@ class _WarehouseHomePageState extends State<WarehouseHomePage>
                 const SizedBox(height: 24),
                 Text(
                   'Your Posted Jobs',
-                  style: TextStyle(
-                    color: Colors.grey[300],
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AppTheme.headingMedium.copyWith(color: Colors.grey[300]),
                 ),
                 const SizedBox(height: 16),
                 if (_postedJobs.isEmpty)
                   Center(
                     child: Text(
                       'No jobs posted yet',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
-                        fontSize: 16,
-                      ),
+                      style: AppTheme.bodyLarge.copyWith(color: Colors.white.withOpacity(0.8)),
                     ),
                   )
                 else
