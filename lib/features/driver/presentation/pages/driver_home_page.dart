@@ -333,7 +333,7 @@ class _DriverHomePageState extends ConsumerState
             ),
           ),
           Text(
-            _profile!.fullName,
+            _profile?.fullName ?? 'Driver',
             style: const TextStyle(
               color: Colors.white,
               fontSize: 18,
@@ -1253,7 +1253,7 @@ class _DriverHomePageState extends ConsumerState
               ),
               if (job.warehouseOwner != null)
                 Text(
-                  job.warehouseOwner!.fullName ?? 'Unknown',
+                  job.warehouseOwner?.fullName ?? 'Unknown',
                   style: TextStyle(
                     color: Colors.grey[500],
                     fontSize: 14,
