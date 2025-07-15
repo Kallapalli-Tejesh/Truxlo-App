@@ -11,6 +11,7 @@ import '../../../profile/presentation/pages/profile_page.dart';
 import '../../../profile/presentation/pages/profile_completion_page.dart';
 import '../../../warehouse/presentation/pages/warehouse_home_page.dart';
 import '../../../broker/presentation/pages/broker_home_page.dart';
+import '../../../../main.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -311,12 +312,26 @@ class _HomePageState extends State<HomePage>
 
     final userRole = _profile!.role?.toString().toLowerCase();
 
+    // After loading profile and determining role
+    if (_profile?.role == 'driver') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacementNamed(context, AppRoutes.driverHome);
+      });
+      return const SizedBox.shrink();
+    }
+
     if (userRole == 'driver') {
       return _buildDriverHome();
     } else if (userRole == 'broker') {
-      return _buildBrokerHome();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacementNamed(context, AppRoutes.brokerHome);
+      });
+      return const SizedBox.shrink();
     } else if (userRole == 'warehouse_owner') {
-      return const WarehouseHomePage();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacementNamed(context, AppRoutes.warehouseHome);
+      });
+      return const SizedBox.shrink();
     } else {
       return Scaffold(
         backgroundColor: Colors.black,
@@ -989,97 +1004,6 @@ class _HomePageState extends State<HomePage>
         ),
       ],
     );
-  }
-
-  Future<void> _applyForJob(String jobId) async {
-    try {
-      final userId = SupabaseService.client.auth.currentUser?.id;
-      if (userId == null) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).clearSnackBars();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please log in to apply for jobs'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
-
-      // Check if user has active jobs
-      final hasActiveJob = await SupabaseService.hasActiveJob(userId);
-      if (hasActiveJob) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).clearSnackBars();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-                'Please complete your current job before applying for new ones'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-        return;
-      }
-
-      // Show loading indicator
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).clearSnackBars();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Row(
-            children: [
-              SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
-                ),
-              ),
-              SizedBox(width: 12),
-              Text(
-                'Submitting application...',
-                style: TextStyle(color: Colors.white),
-              ),
-            ],
-          ),
-          backgroundColor: Colors.blue,
-          duration: Duration(seconds: 5), // Reduced to 5 seconds
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-
-      await SupabaseService.applyForJob(jobId, userId);
-
-      // Show success message
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).clearSnackBars();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Application submitted successfully!'),
-          backgroundColor: Color(0xFF6B5ECD),
-          duration: Duration(seconds: 3),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-
-      // Refresh the jobs lists
-      await Future.wait([
-        _loadAvailableJobs(),
-        _loadMyApplications(),
-      ]);
-    } catch (e) {
-      print('Error applying for job: $e');
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).clearSnackBars();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error applying for job: ${e.toString()}'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
   }
 
   String _formatTimeAgo(DateTime date) {

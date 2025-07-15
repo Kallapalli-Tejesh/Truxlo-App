@@ -8,6 +8,18 @@ import 'features/auth/presentation/pages/login_page.dart';
 import 'features/home/presentation/pages/home_page.dart';
 import 'features/profile/presentation/pages/profile_page.dart';
 import 'providers/user_provider.dart';
+import 'features/driver/presentation/pages/driver_home_page.dart';
+import 'features/broker/presentation/pages/broker_home_page.dart';
+import 'features/warehouse/presentation/pages/warehouse_home_page.dart';
+
+class AppRoutes {
+  static const home = '/home';
+  static const login = '/login';
+  static const driverHome = '/driver-home';
+  static const brokerHome = '/broker-home';
+  static const warehouseHome = '/warehouse-home';
+  static const profile = '/profile';
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -68,8 +80,12 @@ class MyApp extends ConsumerWidget {
           ? HomePage()
           : LoginPage(),
       routes: {
-        '/home': (context) => HomePage(),
-        '/profile': (context) => ProfilePage(),
+        AppRoutes.home: (context) => HomePage(),
+        AppRoutes.login: (context) => LoginPage(),
+        AppRoutes.profile: (context) => ProfilePage(),
+        AppRoutes.driverHome: (context) => DriverHomePage(),
+        AppRoutes.brokerHome: (context) => BrokerHomePage(),
+        AppRoutes.warehouseHome: (context) => WarehouseHomePage(),
       },
     );
   }
