@@ -83,15 +83,15 @@ class _SignUpPageState extends ConsumerState {
             offset: const Offset(0, 8),
           ),
         ],
-      ),
-      child: ClipRRect(
+                ),
+                child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
-        child: Image.asset(
+                  child: Image.asset(
           'assets/images/Truxlo.png',
           width: 80,
           height: 80,
-          fit: BoxFit.contain,
-        ),
+                    fit: BoxFit.contain,
+                  ),
       ),
     );
   }
@@ -123,9 +123,9 @@ class _SignUpPageState extends ConsumerState {
   Widget _buildSignupForm() {
     return Form(
       key: _formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
           _buildRoleSelection(),
           const SizedBox(height: 24),
           _buildCleanTextField(
@@ -285,7 +285,7 @@ class _SignUpPageState extends ConsumerState {
           ),
         ),
         const SizedBox(height: 8),
-        TextFormField(
+                      TextFormField(
           controller: controller,
           validator: validator,
           keyboardType: keyboardType,
@@ -294,7 +294,7 @@ class _SignUpPageState extends ConsumerState {
             color: Colors.white,
             fontSize: 16,
           ),
-          decoration: InputDecoration(
+                        decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(
               color: Colors.grey[500],
@@ -311,22 +311,22 @@ class _SignUpPageState extends ConsumerState {
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
-            ),
-            focusedBorder: OutlineInputBorder(
+                          ),
+                          focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(
                 color: Color(0xFFE53935),
                 width: 2,
               ),
-            ),
-            errorBorder: OutlineInputBorder(
+                          ),
+                          errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
                 color: Colors.red[400]!,
                 width: 2,
               ),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
+                          ),
+                          focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
                 color: Colors.red[400]!,
@@ -356,33 +356,33 @@ class _SignUpPageState extends ConsumerState {
       height: 52,
       child: ElevatedButton(
         onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
+                        style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFFE53935),
-          foregroundColor: Colors.white,
+                          foregroundColor: Colors.white,
           disabledBackgroundColor: Colors.grey[700],
-          shape: RoundedRectangleBorder(
+                          shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: 0,
+                          ),
+                          elevation: 0,
           shadowColor: Colors.transparent,
-        ),
+                        ),
         child: isLoading
-            ? const SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
                   valueColor: AlwaysStoppedAnimation(Colors.white),
                 ),
               )
             : Text(
                 text,
                 style: const TextStyle(
-                  fontSize: 16,
+                                  fontSize: 16,
                   fontWeight: FontWeight.w600,
-                ),
-              ),
-      ),
+                                ),
+                              ),
+                      ),
     );
   }
 
@@ -397,11 +397,11 @@ class _SignUpPageState extends ConsumerState {
             fontSize: 14,
           ),
         ),
-        TextButton(
-          onPressed: () {
+                      TextButton(
+                        onPressed: () {
             Navigator.pop(context);
-          },
-          style: TextButton.styleFrom(
+                        },
+                        style: TextButton.styleFrom(
             padding: EdgeInsets.zero,
             minimumSize: Size.zero,
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -412,10 +412,10 @@ class _SignUpPageState extends ConsumerState {
               color: Color(0xFFE53935),
               fontSize: 14,
               fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ],
+                          ),
+                        ),
+                      ),
+                    ],
     );
   }
 
@@ -497,9 +497,9 @@ class _SignUpPageState extends ConsumerState {
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
-          ),
         ),
-      );
+      ),
+    );
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
