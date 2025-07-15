@@ -7,7 +7,6 @@ import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/pages/login_page.dart';
 import 'features/home/presentation/pages/home_page.dart';
 import 'features/profile/presentation/pages/profile_page.dart';
-import 'features/driver/presentation/pages/driver_home_page.dart';
 import 'providers/user_provider.dart';
 
 void main() async {
@@ -54,6 +53,7 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Initialize user data when app starts
     ref.listen(userProvider, (previous, next) {
       // Handle user state changes if needed
     });
@@ -64,20 +64,9 @@ class MyApp extends ConsumerWidget {
       title: 'Truxlo',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.getTheme(),
-      home: Consumer(
-        builder: (context, ref, child) {
-          final userState = ref.watch(userProvider);
-          final currentUser = Supabase.instance.client.auth.currentUser;
-          if (currentUser == null) {
-            return LoginPage();
-          }
-          final userRole = userState.profile?['role']?.toString().toLowerCase();
-          if (userRole == 'driver') {
-            return DriverHomePage();
-          }
-          return HomePage();
-        },
-      ),
+      home: Supabase.instance.client.auth.currentUser != null
+          ? HomePage()
+          : LoginPage(),
       routes: {
         '/home': (context) => HomePage(),
         '/profile': (context) => ProfilePage(),
