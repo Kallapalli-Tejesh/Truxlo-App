@@ -11,6 +11,7 @@ import '../../../profile/presentation/pages/profile_page.dart';
 import '../../../profile/presentation/pages/profile_completion_page.dart';
 import '../../../warehouse/presentation/pages/warehouse_home_page.dart';
 import '../../../broker/presentation/pages/broker_home_page.dart';
+import '../../../driver/presentation/pages/driver_home_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -331,56 +332,7 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildDriverHome() {
-    return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        leading: IconButton(
-          icon: Icon(Icons.account_circle, color: AppTheme.primaryColor),
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => ProfilePage()),
-            );
-          },
-        ),
-        backgroundColor: AppTheme.surfaceColor,
-        title: Text(
-          'Driver Dashboard',
-          style: AppTheme.headingMedium,
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.refresh, color: AppTheme.primaryColor),
-            onPressed: () async {
-              await Future.wait([
-                _loadAvailableJobs(),
-                _loadMyApplications(),
-                _loadMyJobs(),
-              ]);
-            },
-          ),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: AppTheme.primaryColor,
-          labelColor: AppTheme.textPrimary,
-          unselectedLabelColor: AppTheme.textSecondary,
-          tabs: const [
-            Tab(icon: Icon(Icons.assignment), text: 'Jobs'),
-            Tab(icon: Icon(Icons.local_shipping), text: 'My Jobs'),
-            Tab(icon: Icon(Icons.people), text: 'Applications'),
-          ],
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildAvailableJobsTab(),
-          _buildMyJobsTab(),
-          _buildMyApplicationsTab(),
-        ],
-      ),
-    );
+    return DriverHomePage();
   }
 
   Widget _buildBrokerHome() {
