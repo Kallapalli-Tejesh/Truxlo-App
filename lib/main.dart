@@ -30,7 +30,7 @@ void main() async {
 
   // Initialize Supabase with error handling
   try {
-    await Supabase.initialize(
+  await Supabase.initialize(
       url: supabaseUrl,
       anonKey: supabaseAnonKey,
       debug: kDebugMode, // Only enable debug in development

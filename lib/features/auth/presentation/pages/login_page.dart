@@ -55,239 +55,166 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF0A0A0A),
+      backgroundColor: const Color(0xFF0F0F0F),
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              physics: ClampingScrollPhysics(),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight,
-                ),
-                child: IntrinsicHeight(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
-                      children: [
-                        Flexible(
-                          flex: 2,
-                          child: _buildPremiumHeader(),
-                        ),
-                        _buildLoginForm(),
-                        Flexible(
-                          flex: 1,
-                          child: _buildFooter(),
-                        ),
-                        SizedBox(height: MediaQuery.of(context).viewInsets.bottom),
-                      ],
-                    ),
-                  ),
+        child: SingleChildScrollView(
+          physics: const ClampingScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top,
+            ),
+            child: IntrinsicHeight(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 28),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 40),
+                    _buildMinimalLogo(),
+                    const SizedBox(height: 32),
+                    _buildWelcomeText(),
+                    const SizedBox(height: 32),
+                    _buildCompactForm(),
+                    const Spacer(),
+                    _buildMinimalFooter(),
+                    const SizedBox(height: 24),
+                  ],
                 ),
               ),
-            );
-          },
+            ),
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildPremiumHeader() {
-    return AnimatedBuilder(
-      animation: _animationController,
-      builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(0, 50 * (1 - _animationController.value)),
-          child: Opacity(
-            opacity: _animationController.value,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(height: 40),
-                Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: Color(0xFF2A2A2A),
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Color(0xFFE53935).withOpacity(0.3),
-                        blurRadius: 20,
-                        offset: Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(24),
-                    child: Image.asset(
-                      'assets/images/Truxlo.png',
-                      width: 120,
-                      height: 120,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                ),
-                SizedBox(height: 32),
-                Text(
-                  'Welcome Back',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 32,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Sign in to continue your logistics journey',
-                  style: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
+  Widget _buildMinimalLogo() {
+    return Container(
+      width: 100,
+      height: 100,
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFE53935).withOpacity(0.25),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
           ),
-        );
-      },
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Image.asset(
+          'assets/images/Truxlo.png',
+          width: 100,
+          height: 100,
+          fit: BoxFit.contain,
+        ),
+      ),
     );
   }
 
-  Widget _buildLoginForm() {
-    return AnimatedBuilder(
-      animation: _animationController,
-      builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(0, 30 * (1 - _animationController.value)),
-          child: Opacity(
-            opacity: _animationController.value,
-            child: Container(
-              margin: EdgeInsets.symmetric(vertical: 32),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFF1F1F1F),
-                    Color(0xFF1A1A1A),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(
-                  color: Colors.grey[800]!.withOpacity(0.6),
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.4),
-                    blurRadius: 32,
-                    offset: Offset(0, 16),
-                    spreadRadius: 0,
-                  ),
-                  BoxShadow(
-                    color: Color(0xFFE53935).withOpacity(0.05),
-                    blurRadius: 64,
-                    offset: Offset(0, 0),
-                    spreadRadius: 0,
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(28),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: Container(
-                    padding: EdgeInsets.all(36),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.02),
-                    ),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _buildPremiumTextField(
-                            controller: _emailController,
-                            label: 'Email Address',
-                            hint: 'Enter your email',
-                            icon: Icons.email_outlined,
-                            keyboardType: TextInputType.emailAddress,
-                            validator: ValidationService.validateEmail,
-                          ),
-                          SizedBox(height: 28),
-                          _buildPremiumTextField(
-                            controller: _passwordController,
-                            label: 'Password',
-                            hint: 'Enter your password',
-                            icon: Icons.lock_outline,
-                            obscureText: _obscurePassword,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Password is required';
-                              }
-                              return null;
-                            },
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                                color: Colors.grey[500],
-                                size: 22,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  _obscurePassword = !_obscurePassword;
-                                });
-                              },
-                            ),
-                          ),
-                          SizedBox(height: 36),
-                          _buildPremiumButton(
-                            text: 'Sign In',
-                            onPressed: _isLoading ? null : _login,
-                            isLoading: _isLoading,
-                          ),
-                          SizedBox(height: 20),
-                          Center(
-                            child: TextButton(
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Forgot password feature coming soon'),
-                                    backgroundColor: Color(0xFFE53935),
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                );
-                              },
-                              child: Text(
-                                'Forgot Password?',
-                                style: TextStyle(
-                                  color: Color(0xFFE53935),
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 15,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+  Widget _buildWelcomeText() {
+    return Column(
+      children: const [
+        Text(
+          'Welcome Back',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 28,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.5,
           ),
-        );
-      },
+        ),
+        SizedBox(height: 8),
+        Text(
+          'Sign in to continue',
+          style: TextStyle(
+            color: Colors.grey,
+            fontSize: 16,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildPremiumTextField({
+  Widget _buildCompactForm() {
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildCleanTextField(
+            controller: _emailController,
+            label: 'Email',
+            hint: 'Enter your email',
+            icon: Icons.email_outlined,
+            keyboardType: TextInputType.emailAddress,
+            validator: ValidationService.validateEmail,
+          ),
+          const SizedBox(height: 20),
+          _buildCleanTextField(
+            controller: _passwordController,
+            label: 'Password',
+            hint: 'Enter your password',
+            icon: Icons.lock_outline,
+            obscureText: _obscurePassword,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Password is required';
+              }
+              return null;
+            },
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                color: Colors.grey[500],
+                size: 20,
+              ),
+              onPressed: () {
+                setState(() {
+                  _obscurePassword = !_obscurePassword;
+                });
+              },
+            ),
+          ),
+          const SizedBox(height: 32),
+          _buildCleanButton(
+            text: 'Sign In',
+            onPressed: _isLoading ? null : _login,
+            isLoading: _isLoading,
+          ),
+          const SizedBox(height: 16),
+          TextButton(
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('Forgot password feature coming soon'),
+                  backgroundColor: const Color(0xFFE53935),
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              );
+            },
+            child: const Text(
+              'Forgot Password?',
+              style: TextStyle(
+                color: Color(0xFFE53935),
+                fontWeight: FontWeight.w500,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCleanTextField({
     required TextEditingController controller,
     required String label,
     required String hint,
@@ -300,91 +227,70 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: EdgeInsets.only(left: 4, bottom: 12),
-          child: Text(
-            label,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.3,
-            ),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
           ),
         ),
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 8,
-                offset: Offset(0, 4),
-              ),
-            ],
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          validator: validator,
+          keyboardType: keyboardType,
+          obscureText: obscureText,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
           ),
-          child: TextFormField(
-            controller: controller,
-            validator: validator,
-            keyboardType: keyboardType,
-            obscureText: obscureText,
-            style: TextStyle(
-              color: Colors.white,
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(
+              color: Colors.grey[500],
               fontSize: 16,
-              fontWeight: FontWeight.w500,
             ),
-            decoration: InputDecoration(
-              hintText: hint,
-              hintStyle: TextStyle(
-                color: Colors.grey[500],
-                fontSize: 16,
-                fontWeight: FontWeight.w400,
+            prefixIcon: Icon(
+              icon,
+              color: const Color(0xFFE53935),
+              size: 20,
+            ),
+            suffixIcon: suffixIcon,
+            filled: true,
+            fillColor: const Color(0xFF1A1A1A),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: Color(0xFFE53935),
+                width: 2,
               ),
-              prefixIcon: Container(
-                margin: EdgeInsets.only(left: 16, right: 12),
-                child: Icon(
-                  icon,
-                  color: Color(0xFFE53935),
-                  size: 22,
-                ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: Colors.red[400]!,
+                width: 2,
               ),
-              suffixIcon: suffixIcon,
-              filled: true,
-              fillColor: Color(0xFF2A2A2A),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(18),
-                borderSide: BorderSide.none,
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: Colors.red[400]!,
+                width: 2,
               ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(18),
-                borderSide: BorderSide(
-                  color: Color(0xFFE53935),
-                  width: 2,
-                ),
-              ),
-              errorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(18),
-                borderSide: BorderSide(
-                  color: Colors.red[400]!,
-                  width: 2,
-                ),
-              ),
-              focusedErrorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(18),
-                borderSide: BorderSide(
-                  color: Colors.red[400]!,
-                  width: 2,
-                ),
-              ),
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 20,
-              ),
-              errorStyle: TextStyle(
-                color: Colors.red[400],
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-              ),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
+            errorStyle: TextStyle(
+              color: Colors.red[400],
+              fontSize: 12,
             ),
           ),
         ),
@@ -392,124 +298,77 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
     );
   }
 
-  Widget _buildPremiumButton({
+  Widget _buildCleanButton({
     required String text,
     required VoidCallback? onPressed,
     bool isLoading = false,
   }) {
-    return Container(
-      height: 60,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: onPressed != null
-              ? [
-                  Color(0xFFE53935),
-                  Color(0xFFD32F2F),
-                  Color(0xFFB71C1C),
-                ]
-              : [
-                  Colors.grey[700]!,
-                  Colors.grey[800]!,
-                  Colors.grey[900]!,
-                ],
-        ),
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: onPressed != null
-            ? [
-                BoxShadow(
-                  color: Color(0xFFE53935).withOpacity(0.4),
-                  blurRadius: 20,
-                  offset: Offset(0, 8),
-                  spreadRadius: 0,
-                ),
-                BoxShadow(
-                  color: Color(0xFFE53935).withOpacity(0.2),
-                  blurRadius: 40,
-                  offset: Offset(0, 16),
-                  spreadRadius: 4,
-                ),
-              ]
-            : null,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: BorderRadius.circular(18),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.1),
-                width: 1,
-              ),
-            ),
-            child: Center(
-              child: isLoading
-                  ? SizedBox(
-                      height: 26,
-                      width: 26,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 3,
-                        valueColor: AlwaysStoppedAnimation(Colors.white),
-                      ),
-                    )
-                  : Text(
-                      text,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1,
-                      ),
-                    ),
-            ),
+    return SizedBox(
+      height: 52,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFFE53935),
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: Colors.grey[700],
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
+          elevation: 0,
+          shadowColor: Colors.transparent,
         ),
-      ),
-    );
-  }
-
-  Widget _buildFooter() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              "Don't have an account? ",
-              style: TextStyle(
-                color: Colors.grey[400],
-                fontSize: 16,
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => SignUpPage()),
-                );
-              },
-              child: Text(
-                'Sign Up',
-                style: TextStyle(
-                  color: Color(0xFFE53935),
+        child: isLoading
+            ? const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation(Colors.white),
+                ),
+              )
+            : Text(
+                text,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-            ),
-          ],
-        ),
-        SizedBox(height: 16),
+      ),
+    );
+  }
+
+  Widget _buildMinimalFooter() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
         Text(
-          '© 2024 Truxlo. All rights reserved.',
+          "Don't have an account? ",
           style: TextStyle(
-            color: Colors.grey[600],
-            fontSize: 12,
+            color: Colors.grey[400],
+            fontSize: 14,
+          ),
+        ),
+        TextButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => SignUpPage(),
+              ),
+            );
+          },
+          style: TextButton.styleFrom(
+            padding: EdgeInsets.zero,
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+          child: const Text(
+            'Sign Up',
+            style: TextStyle(
+              color: Color(0xFFE53935),
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ],
@@ -540,7 +399,7 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
             await SessionService.initializeSession();
             
             final fullName = await SupabaseService.getUserFullName(response.user!.id);
-            print('Logged in user name: $fullName');
+            // print('Logged in user name: $fullName');
 
             if (mounted) {
               Navigator.of(context).pushReplacementNamed('/home');
@@ -572,7 +431,10 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
           SnackBar(
             content: Text(errorMessage),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 5),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         );
       }

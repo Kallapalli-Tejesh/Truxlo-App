@@ -289,23 +289,23 @@ class DriverHomePage extends ConsumerWidget with PerformanceMonitoringMixin {
               ),
               SizedBox(width: 12),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       result.success ? 'Application Successful!' : 'Application Failed',
                       style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
+                        ),
                     Text(
                       result.message,
                       style: TextStyle(fontSize: 12),
-                    ),
+                        ),
                   ],
+                    ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
           backgroundColor: result.success ? Colors.green : Colors.red,
           duration: Duration(seconds: result.success ? 3 : 5),
           action: result.success ? null : SnackBarAction(
@@ -314,7 +314,7 @@ class DriverHomePage extends ConsumerWidget with PerformanceMonitoringMixin {
             onPressed: () => _performJobApplication(context, ref, jobId),
           ),
         ),
-      );
+    );
       // Show persistent error for failures
       if (!result.success) {
         ref.read(errorProvider.notifier).showError(

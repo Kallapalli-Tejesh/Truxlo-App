@@ -16,7 +16,7 @@ class SupabaseService {
       if (url == null || anonKey == null) {
         throw Exception('Missing Supabase configuration');
       }
-      await Supabase.initialize(
+    await Supabase.initialize(
         url: url,
         anonKey: anonKey,
         debug: kDebugMode,
@@ -26,7 +26,7 @@ class SupabaseService {
         realtimeClientOptions: const RealtimeClientOptions(
           logLevel: RealtimeLogLevel.info,
         ),
-      );
+    );
       debugPrint('Supabase initialized successfully');
     } catch (e) {
       debugPrint('Supabase initialization failed: $e');
