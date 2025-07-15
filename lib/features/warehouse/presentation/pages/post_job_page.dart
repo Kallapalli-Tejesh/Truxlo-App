@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/services/supabase_service.dart';
 import '../../../jobs/domain/models/job.dart';
+import '../../../../middleware/rate_limit_middleware.dart';
 
 class PostJobPage extends StatefulWidget {
   const PostJobPage({super.key});

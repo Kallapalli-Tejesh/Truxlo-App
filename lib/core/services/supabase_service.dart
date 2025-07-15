@@ -1,6 +1,7 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:async';
 import '../../features/auth/domain/models/user_profile.dart';
 import '../../features/jobs/domain/models/job.dart';
 
@@ -8,11 +9,29 @@ class SupabaseService {
   static final client = Supabase.instance.client;
 
   static Future<void> initialize() async {
-    await dotenv.load();
-    await Supabase.initialize(
-      url: dotenv.env['SUPABASE_URL']!,
-      anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
-    );
+    try {
+      await dotenv.load(fileName: ".env");
+      final url = dotenv.env['SUPABASE_URL'];
+      final anonKey = dotenv.env['SUPABASE_ANON_KEY'];
+      if (url == null || anonKey == null) {
+        throw Exception('Missing Supabase configuration');
+      }
+      await Supabase.initialize(
+        url: url,
+        anonKey: anonKey,
+        debug: kDebugMode,
+        authOptions: const FlutterAuthClientOptions(
+          autoRefreshToken: true,
+        ),
+        realtimeClientOptions: const RealtimeClientOptions(
+          logLevel: RealtimeLogLevel.info,
+        ),
+      );
+      debugPrint('Supabase initialized successfully');
+    } catch (e) {
+      debugPrint('Supabase initialization failed: $e');
+      rethrow;
+    }
   }
 
   static Future<AuthResponse> signUp({
@@ -24,6 +43,7 @@ class SupabaseService {
   }) async {
     try {
       debugPrint('Starting signup process for email: $email');
+      // Add timeout to prevent hanging
       final response = await client.auth.signUp(
         email: email,
         password: password,
@@ -33,8 +53,7 @@ class SupabaseService {
           'phone': phone ?? '',
           'is_profile_complete': false,
         },
-      );
-
+      ).timeout(const Duration(seconds: 30));
       if (response.user != null) {
         debugPrint('User created successfully with ID: ${response.user!.id}');
         
@@ -99,9 +118,14 @@ class SupabaseService {
       }
 
       return response;
+    } on TimeoutException {
+      debugPrint('Signup timeout - network issue');
+      throw Exception('Network timeout. Please check your connection and try again.');
     } catch (e) {
       debugPrint('Supabase signup error: $e');
-      debugPrint('Stack trace: ${StackTrace.current}');
+      if (e.toString().contains('network') || e.toString().contains('connection')) {
+        throw Exception('Network error. Please check your internet connection.');
+      }
       rethrow;
     }
   }

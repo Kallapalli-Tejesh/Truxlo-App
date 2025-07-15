@@ -7,6 +7,7 @@ import '../../../../widgets/performance_optimized_widgets.dart' as job_widgets;
 import '../../../../widgets/error_display_widget.dart';
 import '../../../../services/performance_service.dart';
 import '../../../../core/errors/app_errors.dart';
+import '../../../../middleware/rate_limit_middleware.dart';
 
 class DriverHomePage extends ConsumerWidget with PerformanceMonitoringMixin {
   @override
@@ -23,22 +24,22 @@ class DriverHomePage extends ConsumerWidget with PerformanceMonitoringMixin {
               decoration: BoxDecoration(
                 color: Color(0xFFE53935).withOpacity(0.2),
                 borderRadius: BorderRadius.circular(16),
-              ),
+        ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
-                children: [
+          children: [
                   Icon(Icons.work, color: Color(0xFFE53935), size: 16),
                   SizedBox(width: 6),
-                  Text(
+            Text(
                     '${ref.watch(jobCountProvider)} Jobs',
-                    style: TextStyle(
+              style: TextStyle(
                       color: Color(0xFFE53935),
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
               ),
+            ),
+          ],
+        ),
             ),
             SizedBox(width: 16),
           ],
@@ -76,7 +77,7 @@ class DriverHomePage extends ConsumerWidget with PerformanceMonitoringMixin {
         border: Border(
           bottom: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1),
         ),
-      ),
+          ),
       child: Row(
         children: [
           CircleAvatar(
@@ -158,15 +159,15 @@ class DriverHomePage extends ConsumerWidget with PerformanceMonitoringMixin {
             ),
           ),
         ],
-      ),
-    );
-  }
+        ),
+      );
+    }
 
   Widget _buildEmptyState(WidgetRef ref) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
           Container(
             padding: EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -178,11 +179,11 @@ class DriverHomePage extends ConsumerWidget with PerformanceMonitoringMixin {
               color: Colors.grey[400],
               size: 48,
             ),
-          ),
+            ),
           SizedBox(height: 24),
-          Text(
+            Text(
             'No jobs available right now',
-            style: TextStyle(
+              style: TextStyle(
               color: Colors.white,
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -229,7 +230,7 @@ class DriverHomePage extends ConsumerWidget with PerformanceMonitoringMixin {
           content: Text(
             'Are you sure you want to apply for this job? This action cannot be undone.',
             style: TextStyle(color: Colors.grey[400]),
-          ),
+              ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -251,6 +252,7 @@ class DriverHomePage extends ConsumerWidget with PerformanceMonitoringMixin {
 
   Future<void> _performJobApplication(BuildContext context, WidgetRef ref, String jobId) async {
     try {
+      final userState = ref.read(userProvider);
       // Show loading feedback
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -269,16 +271,14 @@ class DriverHomePage extends ConsumerWidget with PerformanceMonitoringMixin {
           backgroundColor: Colors.blue,
         ),
       );
-      final userState = ref.read(userProvider);
-      final result = await trackAsyncOperation('job_application_submit', () async {
-        return ref.read(jobProvider.notifier).applyForJob(
-          jobId,
-          userState.user!.id,
-        );
-      });
+      // Apply with rate limiting (handled in JobApplicationService)
+      final result = await ref.read(jobProvider.notifier).applyForJob(
+        jobId,
+        userState.user!.id,
+      );
       // Hide loading
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      // Show result with enhanced styling
+      // Show result
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
@@ -311,7 +311,7 @@ class DriverHomePage extends ConsumerWidget with PerformanceMonitoringMixin {
           action: result.success ? null : SnackBarAction(
             label: 'Retry',
             textColor: Colors.white,
-            onPressed: () => _applyForJob(context, ref, jobId),
+            onPressed: () => _performJobApplication(context, ref, jobId),
           ),
         ),
       );
@@ -352,7 +352,7 @@ class DriverHomePage extends ConsumerWidget with PerformanceMonitoringMixin {
                 SnackBar(
                   content: Text('Job status updated to $statusDisplayName'),
                   backgroundColor: Colors.green,
-                ),
+        ),
               );
             },
             style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFE53935)),

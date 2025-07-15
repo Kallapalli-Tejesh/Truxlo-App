@@ -272,7 +272,7 @@ class _HomePageState extends State<HomePage>
       await SupabaseService.signOut();
       if (mounted) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const LoginPage()),
+          MaterialPageRoute(builder: (_) => LoginPage()),
         );
       }
     } catch (e) {
@@ -339,7 +339,7 @@ class _HomePageState extends State<HomePage>
           icon: Icon(Icons.account_circle, color: AppTheme.primaryColor),
           onPressed: () {
             Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const ProfilePage()),
+              MaterialPageRoute(builder: (_) => ProfilePage()),
             );
           },
         ),

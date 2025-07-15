@@ -236,7 +236,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           _profile = null;
                         });
                         Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(builder: (_) => const LoginPage()),
+                          MaterialPageRoute(builder: (_) => LoginPage()),
                           (route) => false,
                         );
                       }
