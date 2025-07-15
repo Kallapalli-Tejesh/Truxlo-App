@@ -9,6 +9,8 @@ import '../../../../services/performance_service.dart';
 import '../../../../core/errors/app_errors.dart';
 import '../../../../middleware/rate_limit_middleware.dart';
 
+// File: driver_home_page.dart
+// This is the driver's home page (DriverHomePage)
 class DriverHomePage extends ConsumerWidget with PerformanceMonitoringMixin {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
