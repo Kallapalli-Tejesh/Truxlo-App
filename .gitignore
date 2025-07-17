@@ -43,3 +43,12 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Environment variables
+.env
+.env.development
+.env.production
+
+# Project specific
+/INS/
+/.kiro/
