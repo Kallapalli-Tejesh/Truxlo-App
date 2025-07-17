@@ -7,6 +7,9 @@ import '../../../jobs/domain/models/job.dart';
 import '../../../jobs/domain/models/job_application.dart';
 import '../../../jobs/presentation/pages/job_details_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
+import '../../../../services/location_service.dart';
+import '../../../../services/tracking_service.dart';
+import 'job_tracking_page.dart';
 
 class DriverHomePage extends StatefulWidget {
   const DriverHomePage({Key? key}) : super(key: key);
@@ -412,51 +415,109 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
                   Icons.location_on,
                 ),
                 const SizedBox(height: 16),
-                if (job.jobStatus == 'assigned')
+                // Action buttons based on job status
+                if (job.jobStatus == 'assigned') ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () => _startDelivery(job.id),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: const Text(
+                            'Start Delivery',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      ElevatedButton.icon(
+                        onPressed: () => _openJobTracking(job),
+                        icon: const Icon(Icons.map, size: 18),
+                        label: const Text('Track'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ] else if (job.jobStatus == 'inTransit') ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () => _updateJobStatus(job.id, job.jobStatus),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: const Text(
+                            'Complete Delivery',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      ElevatedButton.icon(
+                        onPressed: () => _openJobTracking(job),
+                        icon: const Icon(Icons.navigation, size: 18),
+                        label: const Text('Navigate'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ] else if (job.jobStatus == 'awaitingPickupVerification' || 
+                          job.jobStatus == 'awaitingDeliveryVerification') ...[
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => _startDelivery(job.id),
+                    child: ElevatedButton.icon(
+                      onPressed: () => _openJobTracking(job),
+                      icon: const Icon(Icons.location_on, size: 18),
+                      label: Text(
+                        job.jobStatus == 'awaitingPickupVerification' 
+                            ? 'View Pickup Location' 
+                            : 'View Delivery Location'
+                      ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
+                        backgroundColor: Colors.purple,
                         foregroundColor: Colors.white,
-                        elevation: 0,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: const Text(
-                        'Start Delivery',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
                     ),
                   ),
-                if (job.jobStatus == 'inTransit')
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => _updateJobStatus(job.id, job.jobStatus),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text(
-                        'Complete Delivery',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
+                ],
               ],
             ),
           ),
@@ -623,7 +684,7 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-            child: Text(
+                child: Text(
                   job.title,
                   style: const TextStyle(
                     color: Colors.white,
@@ -654,10 +715,10 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
                     const SizedBox(width: 4),
                     Text(
                       statusMessage,
-              style: TextStyle(
+                      style: TextStyle(
                         color: statusColor,
                         fontSize: 14,
-                fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],
@@ -678,10 +739,10 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
+            children: [
+              Text(
                 'Applied ${_formatTimeAgo(createdAt)}',
-                  style: TextStyle(
+                style: TextStyle(
                   color: Colors.grey[500],
                   fontSize: 14,
                 ),
@@ -719,11 +780,11 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
                         color: statusColor,
                         fontSize: 14,
                       ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
           ],
         ],
       ),
@@ -752,9 +813,9 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
             ),
           ),
         ],
-        ),
-      );
-    }
+      ),
+    );
+  }
 
   Widget _buildLocationSection(String label, String value, IconData icon) {
     return Row(
@@ -762,9 +823,9 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
         Icon(icon, color: Colors.white.withOpacity(0.7), size: 20),
         const SizedBox(width: 8),
         Expanded(
-        child: Column(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+            children: [
               Text(
                 label,
                 style: TextStyle(
@@ -772,10 +833,10 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
                   fontSize: 14,
                 ),
               ),
-            Text(
+              Text(
                 value,
                 style: const TextStyle(
-              color: Colors.white,
+                  color: Colors.white,
                   fontSize: 16,
                 ),
               ),
@@ -783,6 +844,16 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
           ),
         ),
       ],
+    );
+  }
+
+  // Open job tracking page
+  void _openJobTracking(Job job) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => JobTrackingPage(job: job),
+      ),
     );
   }
 
@@ -806,8 +877,7 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
         ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-          content: Text(
-                'Please complete your current job before applying for new ones'),
+            content: Text('Please complete your current job before applying for new ones'),
             backgroundColor: Colors.orange,
           ),
         );
@@ -816,7 +886,7 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
       if (!mounted) return;
       ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Row(
             children: [
               SizedBox(
@@ -896,6 +966,44 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
     }
   }
 
+  Color _getJobStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'open':
+        return Colors.green;
+      case 'assigned':
+        return Colors.blue;
+      case 'awaitingpickupverification':
+        return Colors.purple;
+      case 'intransit':
+        return Colors.orange;
+      case 'completed':
+        return Colors.green;
+      case 'cancelled':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String _getJobStatusText(String status) {
+    switch (status.toLowerCase()) {
+      case 'open':
+        return 'OPEN';
+      case 'assigned':
+        return 'ASSIGNED';
+      case 'awaitingpickupverification':
+        return 'PICKUP PENDING';
+      case 'intransit':
+        return 'IN TRANSIT';
+      case 'completed':
+        return 'COMPLETED';
+      case 'cancelled':
+        return 'CANCELLED';
+      default:
+        return status.toUpperCase();
+    }
+  }
+
   Future<void> _startDelivery(String jobId) async {
     try {
       await SupabaseService.updateJobStatus(jobId, 'awaitingPickupVerification');
@@ -909,8 +1017,8 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
       );
     } catch (e) {
       if (!mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
           content: Text('Error starting delivery: $e'),
           backgroundColor: Colors.red,
         ),
@@ -921,40 +1029,20 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
   Future<void> _updateJobStatus(String jobId, String currentStatus) async {
     try {
       switch (currentStatus.toLowerCase()) {
-        case 'assigned':
-          await SupabaseService.startDelivery(jobId);
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Delivery started - Awaiting pickup verification'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          break;
-        case 'awaitingpickupverification':
-          await SupabaseService.updateJobStatus(jobId, 'inTransit');
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Job status updated to In Transit'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          break;
         case 'intransit':
-          await SupabaseService.completeDelivery(jobId);
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Delivery completed - Awaiting warehouse owner verification'),
-              backgroundColor: Colors.green,
-            ),
-          );
+          await SupabaseService.updateJobStatus(jobId, 'awaitingDeliveryVerification');
           break;
         default:
           return;
       }
       await _loadMyJobs();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Job status updated successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -963,44 +1051,6 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
           backgroundColor: Colors.red,
         ),
       );
-    }
-  }
-
-  String _getJobStatusText(String status) {
-    switch (status.toLowerCase()) {
-      case 'open':
-        return 'Open';
-      case 'assigned':
-        return 'Assigned';
-      case 'awaitingpickupverification':
-        return 'Awaiting Pickup';
-      case 'intransit':
-        return 'In Transit';
-      case 'completed':
-        return 'Completed';
-      case 'cancelled':
-        return 'Cancelled';
-      default:
-        return status;
-    }
-  }
-
-  Color _getJobStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'open':
-        return Colors.blue;
-      case 'assigned':
-        return Colors.blue;
-      case 'awaitingpickupverification':
-        return Colors.purple;
-      case 'intransit':
-        return Colors.orange;
-      case 'completed':
-        return Colors.green;
-      case 'cancelled':
-        return Colors.red;
-      default:
-        return Colors.grey;
     }
   }
 }

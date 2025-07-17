@@ -161,7 +161,11 @@ class AppTheme {
 
   // Card Shadow
   static const List<BoxShadow> cardShadow = [
-    BoxShadow(color: Colors.black54, blurRadius: 8, offset: Offset(0,4)),
+    BoxShadow(
+      color: Color(0x1A000000),
+      blurRadius: 8,
+      offset: Offset(0, 2),
+    ),
   ];
 
   // Grid Spacing
@@ -173,6 +177,7 @@ class AppTheme {
     shadowColor: Colors.black54,
     backgroundColor: primaryColor,
     foregroundColor: textPrimary,
+    padding: const EdgeInsets.symmetric(vertical: paddingMedium),
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(radiusMedium),
     ),

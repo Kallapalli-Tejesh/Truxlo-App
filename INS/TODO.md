@@ -60,6 +60,7 @@
   - [x] Add real-time updates
   - [x] Enhance security checks
 - [ ] Add job filtering and sorting
+- [ ] Add timing for Loads
 - [ ] Implement batch job posting
 - [ ] Add job templates feature
 - [ ] Create analytics dashboard

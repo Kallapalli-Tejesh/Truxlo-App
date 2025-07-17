@@ -8,6 +8,7 @@ import '../../../../core/services/supabase_service.dart';
 import '../../../auth/domain/models/user_profile.dart';
 import 'post_job_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
+import '../../../../widgets/warehouse_tracking_modal.dart';
 
 class WarehouseHomePage extends StatefulWidget {
   const WarehouseHomePage({super.key});
@@ -1088,6 +1089,45 @@ class _WarehouseHomePageState extends State<WarehouseHomePage>
             ],
           ),
           const SizedBox(height: 16),
+          
+          // Track Driver Location button for assigned status
+          if (job.jobStatus == 'assigned')
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _showDriverTracking(job),
+                icon: const Icon(Icons.location_on),
+                label: const Text('Track Driver Location'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ),
+
+          // Track Driver button for inTransit status
+          if (job.jobStatus == 'inTransit')
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _showDriverTracking(job),
+                icon: const Icon(Icons.navigation),
+                label: const Text('Track Driver'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ),
+
           // Show 'Verify Pickup' button for warehouse owner if job is awaiting pickup verification
           if (job.jobStatus == 'awaitingPickupVerification')
             SizedBox(
@@ -1212,6 +1252,16 @@ class _WarehouseHomePageState extends State<WarehouseHomePage>
         ),
       );
     }
+  }
+
+  /// Show driver tracking modal
+  void _showDriverTracking(Job job) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => WarehouseTrackingModal(job: job),
+    );
   }
 
   @override

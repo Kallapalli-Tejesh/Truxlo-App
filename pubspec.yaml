@@ -47,6 +47,12 @@ dependencies:
   collection: ^1.18.0
   encrypt: ^5.0.3
   crypto: ^3.0.6
+  google_maps_flutter: ^2.5.0
+  location: ^5.0.3
+  geolocator: ^10.1.0
+  geocoding: ^2.1.1
+  google_polyline_algorithm: ^3.1.0
+  http: ^1.1.0
 
 dev_dependencies:
   flutter_test:

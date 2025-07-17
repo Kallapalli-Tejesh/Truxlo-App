@@ -113,6 +113,13 @@ CREATE TABLE public.jobs (
     pickup_verified_by UUID REFERENCES profiles(id),
     delivery_verified_at TIMESTAMPTZ,
     delivery_verified_by UUID REFERENCES profiles(id),
+    -- Tracking fields
+    is_tracking_active BOOLEAN DEFAULT FALSE,
+    tracking_started_at TIMESTAMPTZ,
+    pickup_eta TIMESTAMPTZ,
+    delivery_eta TIMESTAMPTZ,
+    route_distance DECIMAL,
+    estimated_travel_time INTEGER, -- in seconds
     created_at TIMESTAMPTZ DEFAULT timezone('utc', now()),
     updated_at TIMESTAMPTZ DEFAULT timezone('utc', now())
 );
@@ -507,3 +514,97 @@ CREATE INDEX IF NOT EXISTS idx_jobs_owner_status ON jobs(warehouse_owner_id, job
 CREATE INDEX IF NOT EXISTS idx_jobs_driver_status ON jobs(assigned_driver_id, job_status);
 CREATE INDEX IF NOT EXISTS idx_applications_job_status ON job_applications(job_id, status);
 CREATE INDEX IF NOT EXISTS idx_applications_driver_status ON job_applications(driver_id, status);
+
+-- Create job tracking logs table
+CREATE TABLE public.job_tracking_logs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    job_id UUID REFERENCES jobs(id) ON DELETE CASCADE,
+    driver_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    latitude DECIMAL NOT NULL,
+    longitude DECIMAL NOT NULL,
+    speed DECIMAL DEFAULT 0,
+    heading DECIMAL DEFAULT 0,
+    accuracy DECIMAL DEFAULT 0,
+    job_status TEXT NOT NULL,
+    timestamp TIMESTAMPTZ DEFAULT timezone('utc', now()),
+    created_at TIMESTAMPTZ DEFAULT timezone('utc', now())
+);
+
+-- Create notifications table
+CREATE TABLE public.notifications (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    job_id UUID REFERENCES jobs(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMPTZ DEFAULT timezone('utc', now()),
+    updated_at TIMESTAMPTZ DEFAULT timezone('utc', now())
+);
+
+-- Update driver_details table to include location tracking fields
+ALTER TABLE public.driver_details ADD COLUMN IF NOT EXISTS current_location TEXT;
+ALTER TABLE public.driver_details ADD COLUMN IF NOT EXISTS last_active TIMESTAMPTZ;
+ALTER TABLE public.driver_details ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'inactive';
+ALTER TABLE public.driver_details ADD COLUMN IF NOT EXISTS rating DECIMAL DEFAULT 0;
+ALTER TABLE public.driver_details ADD COLUMN IF NOT EXISTS total_deliveries INTEGER DEFAULT 0;
+ALTER TABLE public.driver_details ADD COLUMN IF NOT EXISTS broker_id UUID REFERENCES profiles(id);
+
+-- Enable RLS for new tables
+ALTER TABLE public.job_tracking_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+
+-- Grant access to new tables
+GRANT ALL ON public.job_tracking_logs TO authenticated;
+GRANT ALL ON public.notifications TO authenticated;
+
+-- Create policies for job_tracking_logs
+CREATE POLICY "tracking_logs_select_policy" ON job_tracking_logs
+    FOR SELECT USING (
+        driver_id = auth.uid() OR
+        job_id IN (
+            SELECT id FROM jobs
+            WHERE warehouse_owner_id = auth.uid()
+        )
+    );
+
+CREATE POLICY "tracking_logs_insert_policy" ON job_tracking_logs
+    FOR INSERT WITH CHECK (driver_id = auth.uid());
+
+-- Create policies for notifications
+CREATE POLICY "notifications_select_policy" ON notifications
+    FOR SELECT USING (
+        user_id = auth.uid() OR
+        job_id IN (
+            SELECT id FROM jobs
+            WHERE warehouse_owner_id = auth.uid() OR assigned_driver_id = auth.uid()
+        )
+    );
+
+CREATE POLICY "notifications_insert_policy" ON notifications
+    FOR INSERT WITH CHECK (
+        job_id IN (
+            SELECT id FROM jobs
+            WHERE warehouse_owner_id = auth.uid() OR assigned_driver_id = auth.uid()
+        )
+    );
+
+CREATE POLICY "notifications_update_policy" ON notifications
+    FOR UPDATE USING (user_id = auth.uid())
+    WITH CHECK (user_id = auth.uid());
+
+-- Create indexes for tracking and notifications
+CREATE INDEX IF NOT EXISTS idx_tracking_logs_job_id ON job_tracking_logs(job_id);
+CREATE INDEX IF NOT EXISTS idx_tracking_logs_driver_id ON job_tracking_logs(driver_id);
+CREATE INDEX IF NOT EXISTS idx_tracking_logs_timestamp ON job_tracking_logs(timestamp);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_job_id ON notifications(job_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at);
+CREATE INDEX IF NOT EXISTS idx_driver_details_location ON driver_details(current_location);
+CREATE INDEX IF NOT EXISTS idx_driver_details_status ON driver_details(status);
+CREATE INDEX IF NOT EXISTS idx_jobs_tracking ON jobs(is_tracking_active);
+
+-- Add tracking-related indexes to jobs table
+CREATE INDEX IF NOT EXISTS idx_jobs_pickup_coords ON jobs(pickup_lat, pickup_lng);
+CREATE INDEX IF NOT EXISTS idx_jobs_destination_coords ON jobs(destination_lat, destination_lng);
